@@ -1,0 +1,15 @@
+{
+  "name": "mlops-pipeline-webapp",
+  "version": "1.0.0",
+  "description": "Automated Machine Learning Model Training and Deployment Pipeline (MLOps) - full stack demo (Node.js/Express backend + HTML/CSS/JS frontend)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "keywords": ["mlops", "pipeline", "machine-learning", "cloud-computing"],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

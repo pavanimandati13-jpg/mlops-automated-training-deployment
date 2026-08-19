@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MLOps Pipeline Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="scanline-overlay" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="rivet"></span>
+    <div>
+      <h1>MLOps Pipeline Control</h1>
+      <p class="subtitle">Automated model training &amp; deployment — line status</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="clock-block">
+      <span class="clock-label">Deployed model</span>
+      <span id="deployed-badge" class="deployed-badge deployed-badge--none">NONE</span>
+    </div>
+    <button id="run-btn" class="btn-run">
+      <span class="btn-run-icon">&#9654;</span> RUN PIPELINE
+    </button>
+  </div>
+</header>
+
+<main class="floor">
+
+  <!-- Signature element: the conveyor / stage line -->
+  <section class="conveyor-panel" aria-label="Pipeline stages">
+    <div class="conveyor-track">
+      <div id="conveyor-fill" class="conveyor-fill"></div>
+      <ol class="conveyor-stages" id="conveyor-stages">
+        <li class="stage" data-stage="data">
+          <span class="stage-node"><svg viewBox="0 0 24 24"><path d="M4 5c0-1.1 3.6-2 8-2s8 .9 8 2-3.6 2-8 2-8-.9-8-2Zm0 0v14c0 1.1 3.6 2 8 2s8-.9 8-2V5M4 12c0 1.1 3.6 2 8 2s8-.9 8-2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          <span class="stage-label">01 · Ingest</span>
+        </li>
+        <li class="stage" data-stage="train">
+          <span class="stage-node"><svg viewBox="0 0 24 24"><path d="M4 20V10m5 10V4m5 16v-7m5 7V8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+          <span class="stage-label">02 · Train</span>
+        </li>
+        <li class="stage" data-stage="evaluate">
+          <span class="stage-node"><svg viewBox="0 0 24 24"><path d="m4 13 4 4L20 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="stage-label">03 · Evaluate</span>
+        </li>
+        <li class="stage" data-stage="gate">
+          <span class="stage-node"><svg viewBox="0 0 24 24"><path d="M6 21V9m0 0 6-6 6 6M6 9h12v12H6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+          <span class="stage-label">04 · Gate</span>
+        </li>
+        <li class="stage" data-stage="deploy">
+          <span class="stage-node"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6l-8-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+          <span class="stage-label">05 · Deploy</span>
+        </li>
+      </ol>
+    </div>
+    <p id="status-message" class="status-message">Line idle. Press RUN PIPELINE to start a build.</p>
+  </section>
+
+  <div class="grid-2col">
+
+    <!-- Console -->
+    <section class="panel console-panel">
+      <div class="panel-head">
+        <h2>Build console</h2>
+        <span class="panel-tag">LIVE LOG</span>
+      </div>
+      <div id="console-log" class="console-log">
+        <p class="console-line console-line--muted">&gt; awaiting first run…</p>
+      </div>
+    </section>
+
+    <!-- Metrics -->
+    <section class="panel metrics-panel">
+      <div class="panel-head">
+        <h2>Latest evaluation</h2>
+        <span class="panel-tag">TEST SET</span>
+      </div>
+      <div class="gauge-row">
+        <div class="gauge">
+          <span class="gauge-value" id="metric-r2">—</span>
+          <span class="gauge-label">R&sup2; score</span>
+        </div>
+        <div class="gauge">
+          <span class="gauge-value" id="metric-rmse">—</span>
+          <span class="gauge-label">RMSE ($)</span>
+        </div>
+        <div class="gauge">
+          <span class="gauge-value" id="metric-mae">—</span>
+          <span class="gauge-label">MAE ($)</span>
+        </div>
+      </div>
+      <div class="threshold-note">Quality gate requires R&sup2; &ge; 0.60 to promote to deployment.</div>
+    </section>
+  </div>
+
+  <div class="grid-2col">
+
+    <!-- Prediction -->
+    <section class="panel predict-panel">
+      <div class="panel-head">
+        <h2>Inference request</h2>
+        <span class="panel-tag">POST /api/predict</span>
+      </div>
+      <p class="panel-desc">Estimate a home price from the currently deployed model.</p>
+      <form id="predict-form" class="predict-form">
+        <label>
+          <span>Square footage</span>
+          <input type="number" id="in-sqft" value="1600" min="200" step="10" required />
+        </label>
+        <label>
+          <span>Bedrooms</span>
+          <input type="number" id="in-bedrooms" value="3" min="1" max="10" step="1" required />
+        </label>
+        <label>
+          <span>Age (years)</span>
+          <input type="number" id="in-age" value="8" min="0" step="1" required />
+        </label>
+        <button type="submit" class="btn-predict">PREDICT</button>
+      </form>
+      <div id="predict-result" class="predict-result"></div>
+    </section>
+
+    <!-- History -->
+    <section class="panel history-panel">
+      <div class="panel-head">
+        <h2>Run history</h2>
+        <span class="panel-tag">LAST 20</span>
+      </div>
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr><th>Run</th><th>R&sup2;</th><th>RMSE</th><th>Gate</th><th>Deployed</th></tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="5" class="history-empty">No runs yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<footer class="floor-footer">
+  <span>Automated ML Model Training &amp; Deployment Pipeline — Node.js / Express backend, static HTML/CSS/JS frontend.</span>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
